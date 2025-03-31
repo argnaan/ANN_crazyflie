@@ -21,9 +21,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
- *
- * hello_world.c - App layer application of a simple hello world debug print every
- *   2 seconds.
+ 
  */
 
 
@@ -36,7 +34,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define DEBUG_MODULE "HELLOWORLD"
+#define DEBUG_MODULE "ANN_crazyflie"
 #include "debug.h"
 
 
@@ -44,7 +42,30 @@ void appMain() {
   DEBUG_PRINT("Waiting for activation ...\n");
 
   while(1) {
+
+    float inputData[ INPUT_SIZE ];
+    
+    readSensors(*inputData);
+
+    // preProcessing(...); ?
+
+    // ANN (...) 
+
+
+
     vTaskDelay(M2T(2000));
     DEBUG_PRINT("Hello World!\n");
   }
 }
+
+void readSensors(float *data){
+  
+  // accelerazione
+
+  // altitudine
+
+  // pitch roll yaw
+
+  // telecamera??
+}
+
