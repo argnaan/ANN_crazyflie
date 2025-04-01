@@ -37,9 +37,24 @@
 #define DEBUG_MODULE "ANN_crazyflie"
 #include "debug.h"
 
+#include "log.h"
+#include "param.h"
+#include "static_mem.h"
+// #include "crtp.h"
+#include "pmw3901.h" // Optical flow deck driver
+#include "deck.h"    // For deck GPIO pin definitions
+
+#define NCS_PIN DECK_GPIO_IO3
+
 
 void appMain() {
   DEBUG_PRINT("Waiting for activation ...\n");
+  // Ensure the Flow Deck is initialized
+  if ((pmw3901Init(NCS_PIN) == false)) { 
+    DEBUG_PRINT("Failed to initialize PMW3901\n");
+    vTaskDelete(NULL);
+    return;
+}
 
   while(1) {
 
@@ -59,6 +74,12 @@ void appMain() {
 }
 
 void readSensors(float *data){
+  // flow deck
+  motionBurst_t currentMotion;
+  pmw3901ReadMotion(NCS_PIN, &currentMotion);
+  data[0] = -currentMotion.deltaX;
+  data[1] = -currentMotion.deltaY;
+  data[2] = currentMotion.squal; // Surface quality
   
   // accelerazione
 
