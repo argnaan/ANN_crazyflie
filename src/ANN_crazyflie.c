@@ -49,6 +49,10 @@
 // #include "state_estimator.h"
 #include "stabilizer.h"
 
+#include "arm_math.h"
+
+#include "pesi_modello.h"
+
 
 
 #define NCS_PIN DECK_GPIO_IO3
@@ -78,7 +82,7 @@ void appMain() {
 
     // preProcessing(...); ?
 
-    // ANN (...) 
+    ANN( inputData );
 
 
 
@@ -104,8 +108,36 @@ void readSensors(float *data){
 
   // altitudine
   
-  
+
   // pitch roll yaw
 
 }
 
+void ANN(float* inputData){
+
+  arm_matrix_instance_f32 net_weights[4];
+
+  arm_mat_init_f32( &net_weights[0], NET_0_WEIGHT_DIM0, NET_0_WEIGHT_DIM1, (float32_t *)net_0_weight );
+  arm_mat_init_f32( &net_weights[1], NET_2_WEIGHT_DIM0, NET_2_WEIGHT_DIM1, (float32_t *)net_2_weight );
+  arm_mat_init_f32( &net_weights[2], NET_4_WEIGHT_DIM0, NET_4_WEIGHT_DIM1, (float32_t *)net_4_weight);
+  arm_mat_init_f32( &net_weights[3], MEAN_LAYER_WEIGHT_DIM0, MEAN_LAYER_WEIGHT_DIM1, (float32_t *)mean_layer_weight );
+  
+  const float* net_bias[4];
+
+  net_bias[0] = net_0_bias;
+  net_bias[1] = net_2_bias;
+  net_bias[2] = net_4_bias;
+  net_bias[3] = mean_layer_bias;
+
+  float buffer_1[256];
+  float buffer_2[256];
+  memcpy(buffer_1, inputData, INPUT_SIZE*sizeof(float));
+
+  for( int l = 0 ; l < 4 ; l++)
+  {
+    arm_mat_vec_mult_f32( net_weights[l], buffer_1, buffer_2);
+    arm_add_f32( buffer_2, net_bias[l], buffer_1, net_weights[l].numRows );
+
+    // attivazione
+  }
+}
