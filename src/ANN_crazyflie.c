@@ -104,6 +104,7 @@ void readSensors(float *data){
 
   // altitudine
   
+  
   // pitch roll yaw
 
 }
