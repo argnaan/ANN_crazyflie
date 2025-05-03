@@ -135,9 +135,19 @@ void ANN(float* inputData){
 
   for( int l = 0 ; l < 4 ; l++)
   {
-    arm_mat_vec_mult_f32( net_weights[l], buffer_1, buffer_2);
-    arm_add_f32( buffer_2, net_bias[l], buffer_1, net_weights[l].numRows );
+    int n = net_weights[l].numRows;
+    // arm_mat_vec_mult_f32 (const arm_matrix_instance_f32 *pSrcMat, const float32_t *pVec, float32_t *pDst)
+    arm_mat_vec_mult_f32( &net_weights[l], buffer_1, buffer_2);
+    
+    // arm_add_f32 (const float32_t *pSrcA, const float32_t *pSrcB, float32_t *pDst, uint32_t blockSize)
+    arm_add_f32( buffer_2, net_bias[l], buffer_1, n );    
 
     // attivazione
+    relu_f32 ( buffer_1 , n );
   }
+}
+
+void relu_f32 ( float* vec, int n){
+  for ( int i=0; i<n ; i++)
+    vec[i] = (vec[i]>0) ? vec[i] : 0.0f;
 }
