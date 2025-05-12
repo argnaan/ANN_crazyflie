@@ -75,12 +75,18 @@ void appMain() {
     
     readSensors(inputData);
 
-    for(int i=0; i<6; i++){
+    for(int i=0; i<10; i++){
       DEBUG_PRINT("%f\t", (double) inputData[i]);
     }
     DEBUG_PRINT("\n");
 
     // preProcessing(...); ?
+    paramVarId_t idEstimator = paramGetVarId("stabilizer", "estimator");
+    uint8_t estimator_type;
+    // Get parameter value
+    estimator_type = paramGetInt(idEstimator);
+    DEBUG_PRINT("Estimator type is now: %d deg\n", estimator_type);
+
 
     ANN( inputData );
 
@@ -106,10 +112,22 @@ void readSensors(float *data){
   data[4] = acc.y;
   data[5] = acc.z;
 
-  // altitudine
-  
-
   // pitch roll yaw
+  logVarId_t idYaw = logGetVarId("stateEstimate", "yaw");
+  logVarId_t idPitch = logGetVarId("stateEstimate", "pitch");
+  logVarId_t idRoll = logGetVarId("stateEstimate", "roll");
+  data[6] = logGetFloat(idYaw);
+  data[7] = logGetFloat(idPitch);
+  data[8] = logGetFloat(idRoll);
+
+
+  // altitudine del punto di partenza
+  logVarId_t idAltEstimated = logGetVarId("stateEstimate", "z");
+  data[9] = logGetFloat(idAltEstimated);
+
+  // altitudine dal livello del mare
+  logVarId_t idAltBaro = logGetVarId("baro", "asl");
+  data[10] = logGetFloat(idAltBaro);
 
 }
 

@@ -1,1 +1,2 @@
 obj-y += ANN_crazyflie.o
+ESTIMATOR=kalman
