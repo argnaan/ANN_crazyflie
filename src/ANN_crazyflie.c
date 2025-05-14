@@ -80,12 +80,13 @@ void appMain() {
     }
     DEBUG_PRINT("\n");
 
-    // preProcessing(...); ?
+  
     paramVarId_t idEstimator = paramGetVarId("stabilizer", "estimator");
     uint8_t estimator_type;
     // Get parameter value
     estimator_type = paramGetInt(idEstimator);
     DEBUG_PRINT("Estimator type is now: %d deg\n", estimator_type);
+
 
 
     ANN( inputData );
@@ -172,6 +173,7 @@ void ANN(float* inputData){
     // attivazione
     relu_f32 ( buffer_1 , n );
   }
+
 }
 
 void relu_f32 ( float* vec, int n){
