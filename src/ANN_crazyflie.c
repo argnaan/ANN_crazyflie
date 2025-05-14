@@ -75,7 +75,7 @@ void appMain() {
     
     readSensors(inputData);
 
-    for(int i=0; i<10; i++){
+    for(int i=0; i<14; i++){
       DEBUG_PRINT("%f\t", (double) inputData[i]);
     }
     DEBUG_PRINT("\n");
@@ -128,6 +128,15 @@ void readSensors(float *data){
   // altitudine dal livello del mare
   logVarId_t idAltBaro = logGetVarId("baro", "asl");
   data[10] = logGetFloat(idAltBaro);
+
+  //magnetrometro
+  logVarId_t idMagX = logGetVarId("mag", "x");
+  logVarId_t idMagY = logGetVarId("mag", "y");
+  logVarId_t idMagZ = logGetVarId("mag", "z");
+
+  data[11] = logGetFloat(idMagX);
+  data[12] = logGetFloat(idMagY); 
+  data[13] = logGetFloat(idMagZ);
 
 }
 
