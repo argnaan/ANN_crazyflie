@@ -707,6 +707,8 @@ const float mean_layer_bias[4] = {
     0.018884, -0.020387, -0.027698, -0.014882
 };
 
+/*
+
 #define VALUE_LAYER_WEIGHT_DIM0 1
 #define VALUE_LAYER_WEIGHT_DIM1 128
 
@@ -722,3 +724,4 @@ const float value_layer_bias[1] = {
     -0.081296
 };
 
+*/

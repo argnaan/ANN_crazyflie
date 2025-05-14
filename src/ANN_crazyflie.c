@@ -57,7 +57,9 @@
 
 #define NCS_PIN DECK_GPIO_IO3
 #define INPUT_SIZE 17         // dimensione del buffer di input
+#define N_LAYER 4
 
+float input_test [INPUT_SIZE] = { 1.4067, -0.5529, -0.0704,  0.0493, -0.0883,  0.5657,  0.0858, -0.9593, 0.1078, -0.6169,  1.5449,  0.2281,  0.5531,  0.1447,  0.6435, -1.1590, 0.6531 };
 
 
 void appMain() {
@@ -72,26 +74,29 @@ void appMain() {
   while(1) {
 
     float inputData[ INPUT_SIZE ];
+    float output[4];
     
     readSensors(inputData);
-
+/*
     for(int i=0; i<14; i++){
       DEBUG_PRINT("%f\t", (double) inputData[i]);
     }
     DEBUG_PRINT("\n");
-
+*/
   
     paramVarId_t idEstimator = paramGetVarId("stabilizer", "estimator");
     uint8_t estimator_type;
     // Get parameter value
     estimator_type = paramGetInt(idEstimator);
-    DEBUG_PRINT("Estimator type is now: %d deg\n", estimator_type);
+    // DEBUG_PRINT("Estimator type is now: %d deg\n", estimator_type);
 
+    // float *output = ANN( inputData );
+    ANN ( input_test, output );
 
+    for( int i=0; i<4 ; i++ )
+      DEBUG_PRINT("Output[%d]: %f\n", i, (double)output[i]);
 
-    ANN( inputData );
-
-
+    DEBUG_PRINT("\n");
 
     vTaskDelay(M2T(100));
   }
@@ -141,7 +146,7 @@ void readSensors(float *data){
 
 }
 
-void ANN(float* inputData){
+void ANN(float* inputData, float* output ){
 
   arm_matrix_instance_f32 net_weights[4];
 
@@ -150,6 +155,10 @@ void ANN(float* inputData){
   arm_mat_init_f32( &net_weights[2], NET_4_WEIGHT_DIM0, NET_4_WEIGHT_DIM1, (float32_t *)net_4_weight);
   arm_mat_init_f32( &net_weights[3], MEAN_LAYER_WEIGHT_DIM0, MEAN_LAYER_WEIGHT_DIM1, (float32_t *)mean_layer_weight );
   
+  DEBUG_PRINT("%p \n", (void*)net_0_weight);
+  DEBUG_PRINT("%p \n", (void*)net_2_weight);
+  DEBUG_PRINT("%p \n", (void*)net_4_weight);
+
   const float* net_bias[4];
 
   net_bias[0] = net_0_bias;
@@ -161,7 +170,7 @@ void ANN(float* inputData){
   float buffer_2[256];
   memcpy(buffer_1, inputData, INPUT_SIZE*sizeof(float));
 
-  for( int l = 0 ; l < 4 ; l++)
+  for( int l = 0 ; l < N_LAYER ; l++)
   {
     int n = net_weights[l].numRows;
     // arm_mat_vec_mult_f32 (const arm_matrix_instance_f32 *pSrcMat, const float32_t *pVec, float32_t *pDst)
@@ -171,8 +180,12 @@ void ANN(float* inputData){
     arm_add_f32( buffer_2, net_bias[l], buffer_1, n );    
 
     // attivazione
-    relu_f32 ( buffer_1 , n );
+    if( l < N_LAYER-1) 
+      relu_f32 ( buffer_1 , n );
   }
+  
+  for(int i=0; i<4; i++)
+    output[i] = buffer_1[i];
 
 }
 
