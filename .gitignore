@@ -6,3 +6,4 @@ src/.ANN_crazyflie.o.cmd
 src/.hello_world.o.cmd
 src/built-in.o
 src/.ANN_crazyflie.o.d
+src/ANN_crazyflie.o
