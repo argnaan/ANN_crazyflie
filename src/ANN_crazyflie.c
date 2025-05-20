@@ -48,6 +48,9 @@
 #include "sensors.h"
 // #include "state_estimator.h"
 #include "stabilizer.h"
+#include "stabilizer_types.h"
+#include "commander.h"
+#include "usec_time.h"
 
 #include "arm_math.h"
 
@@ -65,18 +68,25 @@ float input_test [INPUT_SIZE] = { 1.4067, -0.5529, -0.0704,  0.0493, -0.0883,  0
 void appMain() {
   DEBUG_PRINT("Waiting for activation ...\n");
   // Ensure the Flow Deck is initialized
-  if ((pmw3901Init(NCS_PIN) == false)) { 
+  if ((pmw3901Init(NCS_PIN) == false)) {
     DEBUG_PRINT("Failed to initialize PMW3901\n");
     vTaskDelete(NULL);
     return;
-}
+  }
+  
+  usecTimerInit();
 
   while(1) {
 
     float inputData[ INPUT_SIZE ];
     float output[4];
+
+    usecTimerReset();
     
     readSensors(inputData);
+    
+    uint64_t timeSensors = usecTimestamp();
+    DEBUG_PRINT("\n\nTempo acquisizione sensori: %llu\n", timeSensors );
 /*
     for(int i=0; i<14; i++){
       DEBUG_PRINT("%f\t", (double) inputData[i]);
@@ -90,13 +100,26 @@ void appMain() {
     estimator_type = paramGetInt(idEstimator);
     // DEBUG_PRINT("Estimator type is now: %d deg\n", estimator_type);
 
-    // float *output = ANN( inputData );
+    usecTimerReset();
+
+    // ANN( inputData, output );
     ANN ( input_test, output );
+
+    uint64_t timeANN = usecTimestamp();
+    DEBUG_PRINT("Tempo esecuzione ANN: %llu\n", timeANN );
 
     for( int i=0; i<4 ; i++ )
       DEBUG_PRINT("Output[%d]: %f\n", i, (double)output[i]);
 
-    DEBUG_PRINT("\n");
+    usecTimerReset();
+    // controllo diretto dei motori
+    // setMotors ( output );
+
+    // controllo tramite setpoint
+    setSetPoint ( output );
+
+    uint64_t timeMotors = usecTimestamp();
+    DEBUG_PRINT("Tempo controllo motori: %llu\n", timeMotors );
 
     vTaskDelay(M2T(100));
   }
@@ -155,9 +178,9 @@ void ANN(float* inputData, float* output ){
   arm_mat_init_f32( &net_weights[2], NET_4_WEIGHT_DIM0, NET_4_WEIGHT_DIM1, (float32_t *)net_4_weight);
   arm_mat_init_f32( &net_weights[3], MEAN_LAYER_WEIGHT_DIM0, MEAN_LAYER_WEIGHT_DIM1, (float32_t *)mean_layer_weight );
   
-  DEBUG_PRINT("%p \n", (void*)net_0_weight);
-  DEBUG_PRINT("%p \n", (void*)net_2_weight);
-  DEBUG_PRINT("%p \n", (void*)net_4_weight);
+  DEBUG_PRINT("puntatore alla memoria: %08lx \n", (long unsigned int)net_0_weight);
+  DEBUG_PRINT("puntatore alla memoria: %08lx \n", (long unsigned int)net_2_weight);
+  DEBUG_PRINT("puntatore alla memoria: %08lx \n", (long unsigned int)net_4_weight);
 
   const float* net_bias[4];
 
@@ -192,4 +215,38 @@ void ANN(float* inputData, float* output ){
 void relu_f32 ( float* vec, int n){
   for ( int i=0; i<n ; i++)
     vec[i] = (vec[i]>0) ? vec[i] : 0.0f;
+}
+
+
+void setMotors ( float* outputsANN ){
+
+  // Controllo diretto dei motori
+  paramVarId_t idMotorPowerSetEnable = paramGetVarId("motorPowerSet", "enable");
+  paramVarId_t idMotorPowerSetM1 = paramGetVarId("motorPowerSet", "m1");
+  paramVarId_t idMotorPowerSetM2 = paramGetVarId("motorPowerSet", "m2");
+  paramVarId_t idMotorPowerSetM3 = paramGetVarId("motorPowerSet", "m3");
+  paramVarId_t idMotorPowerSetM4 = paramGetVarId("motorPowerSet", "m4");
+  
+  paramSetInt( idMotorPowerSetEnable, 1 );           // Nonzero to override controller with set values
+  paramSetInt( idMotorPowerSetM1, (uint16_t) outputsANN[0] );
+  paramSetInt( idMotorPowerSetM2, (uint16_t) outputsANN[1] );
+  paramSetInt( idMotorPowerSetM3, (uint16_t) outputsANN[2] );
+  paramSetInt( idMotorPowerSetM4, (uint16_t) outputsANN[3] );
+}
+
+void setSetPoint ( float* outputsANN ){
+
+  setpoint_t setpoint;
+  quaternion_t quaternion;
+
+  quaternion.x = outputsANN[0];
+  quaternion.y = outputsANN[1];
+  quaternion.z = outputsANN[2];
+  quaternion.w = outputsANN[3];
+
+  setpoint.attitudeQuaternion = quaternion;
+  setpoint.mode.quat = modeAbs;                 // modeAbs o modeVelocity
+  setpoint.velocity_body = true;                // true if velocity is given in body frame; false if velocity is given in world frame
+
+  commanderSetSetpoint(&setpoint, COMMANDER_PRIORITY_HIGHLEVEL );
 }

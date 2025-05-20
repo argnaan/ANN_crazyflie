@@ -22,5 +22,5 @@ OOT_CONFIG := $(PWD)/app-config
 
 include $(CRAZYFLIE_BASE)/tools/make/oot.mk
 
-flash:
+flash_cfloader:
 	cfloader flash build/cf2.bin stm32-fw
