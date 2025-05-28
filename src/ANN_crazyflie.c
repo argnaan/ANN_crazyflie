@@ -56,15 +56,62 @@
 
 #include "pesi_modello.h"
 
+#include "controller.h"
 
 
 #define NCS_PIN DECK_GPIO_IO3
 #define INPUT_SIZE 17         // dimensione del buffer di input
 #define N_LAYER 4
 
-float input_test [INPUT_SIZE] = { 1.4067, -0.5529, -0.0704,  0.0493, -0.0883,  0.5657,  0.0858, -0.9593, 0.1078, -0.6169,  1.5449,  0.2281,  0.5531,  0.1447,  0.6435, -1.1590, 0.6531 };
 
+void appMain() {
+  DEBUG_PRINT("Waiting for activation ...\n");
 
+  while(1) {
+    vTaskDelay(M2T(2000));
+  }
+}
+
+void controllerOutOfTreeInit() {
+  // Initialize your controller data here...
+
+  // Call the PID controller instead in this example to make it possible to fly
+  // controllerPidInit();
+}
+
+bool controllerOutOfTreeTest() {
+  
+  float input_test [INPUT_SIZE] = { 1.4067, -0.5529, -0.0704,  0.0493, -0.0883,  0.5657,  0.0858, -0.9593, 0.1078, -0.6169,  1.5449,  0.2281,  0.5531,  0.1447,  0.6435, -1.1590, 0.6531 };
+  float expected_out [4] = {0.1750, -0.0653,  0.1388,  0.2893};
+  float output[4];
+
+  ANN ( input_test, output );
+  
+  for ( int i=0; i<4 ; i++){
+    if ( output[i] - expected_out[i] > 0.001 )
+      return false;
+  }
+
+  return true;
+}
+
+void controllerOutOfTree(control_t *control, const setpoint_t *setpoint, const sensorData_t *sensors, const state_t *state, const uint32_t tick) {
+  
+  float inputData[ INPUT_SIZE ];
+  float output[4];
+
+  inputData[0] = sensors.acc.x;
+  inputData[1] = sensors.acc.y;
+  inputData[2] = sensors.acc.z;
+  inputData[3] = sensors.gyro.x;
+
+  ANN( inputData, output );
+
+  
+  
+}
+
+/*
 void appMain() {
   DEBUG_PRINT("Waiting for activation ...\n");
   // Ensure the Flow Deck is initialized
@@ -87,12 +134,12 @@ void appMain() {
     
     uint64_t timeSensors = usecTimestamp();
     DEBUG_PRINT("\n\nTempo acquisizione sensori: %llu\n", timeSensors );
-/*
+
     for(int i=0; i<14; i++){
       DEBUG_PRINT("%f\t", (double) inputData[i]);
     }
     DEBUG_PRINT("\n");
-*/
+
   
     paramVarId_t idEstimator = paramGetVarId("stabilizer", "estimator");
     uint8_t estimator_type;
@@ -124,7 +171,8 @@ void appMain() {
     vTaskDelay(M2T(100));
   }
 }
-
+*/
+/*
 void readSensors(float *data){
   
   // flow deck
@@ -168,6 +216,7 @@ void readSensors(float *data){
   data[13] = logGetFloat(idMagZ);
 
 }
+*/
 
 void ANN(float* inputData, float* output ){
 
@@ -217,6 +266,7 @@ void relu_f32 ( float* vec, int n){
     vec[i] = (vec[i]>0) ? vec[i] : 0.0f;
 }
 
+/*
 
 void setMotors ( float* outputsANN ){
 
@@ -250,3 +300,5 @@ void setSetPoint ( float* outputsANN ){
 
   commanderSetSetpoint(&setpoint, COMMANDER_PRIORITY_HIGHLEVEL );
 }
+
+*/
