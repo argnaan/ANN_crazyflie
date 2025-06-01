@@ -57,6 +57,7 @@
 #include "pesi_modello.h"
 
 #include "controller.h"
+#include "controller_pid.h"
 
 
 #define NCS_PIN DECK_GPIO_IO3
@@ -76,7 +77,7 @@ void controllerOutOfTreeInit() {
   // Initialize your controller data here...
 
   // Call the PID controller instead in this example to make it possible to fly
-  // controllerPidInit();
+  controllerPidInit();
 }
 
 bool controllerOutOfTreeTest() {
@@ -87,25 +88,60 @@ bool controllerOutOfTreeTest() {
 
   ANN ( input_test, output );
   
+
+
   for ( int i=0; i<4 ; i++){
-    if ( output[i] - expected_out[i] > 0.001 )
+    if ( output[i] - expected_out[i] > 0.001f || output[i] - expected_out[i] < -0.001f ) 
       return false;
   }
-
-  return true;
+  DEBUG_PRINT("ANN test passed!\n");
+  return controllerPidTest(); // Call the PID controller test to ensure it works as well
 }
 
 void controllerOutOfTree(control_t *control, const setpoint_t *setpoint, const sensorData_t *sensors, const state_t *state, const uint32_t tick) {
-  
+ 
+  if(!RATE_DO_EXECUTE(RATE_25_HZ, tick))
+    return;
+
+  DEBUG_PRINT("Controller called at tick \n");
   float inputData[ INPUT_SIZE ];
   float output[4];
 
-  inputData[0] = sensors.acc.x;
-  inputData[1] = sensors.acc.y;
-  inputData[2] = sensors.acc.z;
-  inputData[3] = sensors.gyro.x;
+  inputData[0] = sensors->acc.x;
+  inputData[1] = sensors->acc.y;
+  inputData[2] = sensors->acc.z;
+  inputData[3] = sensors->gyro.x;
+  inputData[4] = sensors->gyro.y; 
+  inputData[5] = sensors->gyro.z;
+  inputData[6] = sensors->mag.x;
+  inputData[7] = sensors->mag.y;
+  inputData[8] = sensors->mag.z;
+  inputData[9] = sensors->baro.pressure; // Altitude from barometer
+  inputData[10] = sensors->baro.temperature; // Temperature from barometer
+  inputData[11] = sensors->baro.asl; // Altitude above sea level
+  inputData[12] = state->attitude.roll; // Roll
+  inputData[13] = state->attitude.pitch; // Pitch
+  inputData[14] = state->attitude.yaw; // Yaw
+  inputData[15] = setpoint->position.x; // Setpoint position X
+  inputData[16] = setpoint->position.y; // Setpoint position Y
+  // inputData[17] = setpoint->position.z; // Setpoint position Z (not used in this example)
 
   ANN( inputData, output );
+
+  output[0]=0;
+  output[1]=0;
+  output[2]=0;
+  output[3]=0;
+      
+  // Override diretto dei comandi motore (solo per test)
+  control->thrust = output[0]; 
+  control->roll = output[1];  
+  control->pitch = output[2]; 
+  control->yaw = output[3];
+  // Set the control mode to legacy
+  control->controlMode = controlModeLegacy;
+
+  DEBUG_PRINT("Control output: roll=%d, pitch=%d, yaw=%d, thrust=%f\n", control->roll, control->pitch, control->yaw, (double) control->thrust);
 
   
   
