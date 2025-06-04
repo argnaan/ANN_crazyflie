@@ -1,12 +1,12 @@
 # ANN_crazyflie
-Implementation of ANN trained for hovering task inside the ﬂight controller. 
+Implementation of an Artificial Neural Network trained for hovering task inside the ﬂight controller of the [Crazyflie drone](https://www.bitcraze.io/products/crazyflie-2-1-plus). 
 
-This project is the final project of the course *Cyber-Physical Systems Programming*. 
+This project was developed as the final project of the course *Cyber-Physical Systems Programming*. 
 
 ## Installation Requirements
 First, you need to install a toolchain and a compiler. To do so, follow the instructions in [Building and Flashing](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/building-and-flashing/build/).
 
-First of all clone our fork of the [crazyflie firmware](https://github.com/argnaan/crazyflie-firmware) repository
+Then clone our fork of the [crazyflie firmware](https://github.com/argnaan/crazyflie-firmware) repository
 ```bash
 $ git clone --recursive https://github.com/argnaan/crazyflie-firmware
 $ cd crazyflie-firmware
@@ -36,10 +36,10 @@ $ git clone https://github.com/argnaan/ANN_crazyflie.git
 The main files in this repository are organized as follows:
 
 - `src/ANN_crazyflie.c`  
-  Contains the C implementation of the Out Of Tree Controller, in particular the functions *controllerOutOfTreeInit()*, *controllerOutOfTreeTest()* and *controllerOutOfTree(...)*.
+  Contains the C implementation of the Out Of Tree Controller, in particular the functions *controllerOutOfTreeInit()*, *controllerOutOfTreeTest()* and *controllerOutOfTree(...)*, where the ANN is implemented.
 
 - `get_header.py`  
-  Python script used to convert the trained model's weights in pytorch format *best_agent_noise01.pt* into a C-compatible header file (`src/pesi_modello.h`).
+  Python script used to convert the model's weights, written in *best_agent_noise01.pt* in PyTorch format, into a C-compatible header file (`src/pesi_modello.h`).
 
 - `golden_model.py`  
   Python implementation of the same neural network used as a reference (golden model) to validate the C version's behavior of *ANN_crazyflie.c*.
@@ -60,7 +60,7 @@ And flash
 $ make flash_cfloader
 ```
 
-To check if everything is working fine run the cfclient
+To check if everything is working fine run the **cfclient** and connect to the Crazyflie through USB serial interface
 ```bash
 $ cfclient
 ```
@@ -68,4 +68,4 @@ $ cfclient
 ## Contribution
 All team members collaborated closely throughout the project, working together on every aspect of development without dividing tasks individually.
 ## Credits
-For the *Out of Tree Controller*, we took inspiration from https://github.com/mettz/internship and https://github.com/mettz/cps-project by Mattia Guazzaloca 
+For the *Out of Tree Controller*, we took inspiration from https://github.com/mettz/internship by Mattia Guazzaloca. 
