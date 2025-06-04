@@ -4,6 +4,7 @@ Implementation of ANN trained for hovering task inside the ﬂight controller.
 This project is the final project of the course *Cyber-Physical Systems Programming*. 
 
 ## Installation Requirements
+First, you need to install a toolchain and a compiler. To do so, follow the instructions in [Building and Flashing](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/building-and-flashing/build/).
 
 First of all clone our fork of the [crazyflie firmware](https://github.com/argnaan/crazyflie-firmware) repository
 ```bash
@@ -60,8 +61,11 @@ $ make flash_cfloader
 ```
 
 To check if everything is working fine run the cfclient
-
+```bash
+$ cfclient
+```
 
 ## Contribution
-
+All team members collaborated closely throughout the project, working together on every aspect of development without dividing tasks individually.
 ## Credits
+For the *Out of Tree Controller*, we took inspiration from https://github.com/mettz/internship and https://github.com/mettz/cps-project by Mattia Guazzaloca 
