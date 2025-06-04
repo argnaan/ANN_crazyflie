@@ -24,3 +24,25 @@ include $(CRAZYFLIE_BASE)/tools/make/oot.mk
 
 flash_cfloader:
 	cfloader flash build/cf2.bin stm32-fw
+
+init_dongle:
+	@sh -c '\
+	dev_path=$$(udevadm info /dev/bus/usb/*/* | grep -B50 "Bitcraze Crazyradio" | grep "DEVNAME=" | cut -d"=" -f2); \
+	if [ -z "$$dev_path" ]; then \
+		echo "No Crazyradio found!"; \
+		exit 1; \
+	else \
+		echo "Found Crazyradio at $$dev_path"; \
+		sudo chmod 777 $$dev_path; \
+	fi'
+
+init_usb:
+	@sh -c '\
+	dev_path=$$(udevadm info /dev/bus/usb/*/* | grep -B50 "Bitcraze_AB_Crazyflie" | grep "DEVNAME=" | cut -d"=" -f2); \
+	if [ -z "$$dev_path" ]; then \
+		echo "No Crazyflie found!"; \
+		exit 1; \
+	else \
+		echo "Found Crazyflie at $$dev_path"; \
+		sudo chmod 777 $$dev_path; \
+	fi'
