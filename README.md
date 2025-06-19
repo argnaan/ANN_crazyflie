@@ -44,6 +44,10 @@ The main files in this repository are organized as follows:
 - `golden_model.py`  
   Python implementation of the same neural network used as a reference (golden model) to validate the C version's behavior of *ANN_crazyflie.c*.
 
+- `get_header_random.py`  
+  Python script used to generate random model's weights and layers, to perform times analysis with different model sizes.
+
+
 ## Demo Instruction
 First of all compile the project:
 ```bash
