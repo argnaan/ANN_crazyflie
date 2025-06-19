@@ -54,7 +54,8 @@
 
 #include "arm_math.h"
 
-#include "pesi_modello.h"
+// #include "pesi_modello.h"
+#include "pesi_modello_rnd.h"
 
 #include "controller.h"
 #include "controller_pid.h"
@@ -62,7 +63,6 @@
 
 #define NCS_PIN DECK_GPIO_IO3
 #define INPUT_SIZE 17         // dimensione del buffer di input
-#define N_LAYER 4
 
 
 /*
@@ -85,18 +85,19 @@ void controllerOutOfTreeInit() {
 
 bool controllerOutOfTreeTest() {
 
-  float input_test [INPUT_SIZE] = { 1.4067, -0.5529, -0.0704,  0.0493, -0.0883,  0.5657,  0.0858, -0.9593, 0.1078, -0.6169,  1.5449,  0.2281,  0.5531,  0.1447,  0.6435, -1.1590, 0.6531 };
-  float expected_out [4] = {0.1750, -0.0653,  0.1388,  0.2893};
-  float output[4];
+  if(TEST_ANN){
+    float input_test [INPUT_SIZE] = { 1.4067, -0.5529, -0.0704,  0.0493, -0.0883,  0.5657,  0.0858, -0.9593, 0.1078, -0.6169,  1.5449,  0.2281,  0.5531,  0.1447,  0.6435, -1.1590, 0.6531 };
+    float expected_out [4] = {0.1750, -0.0653,  0.1388,  0.2893};
+    float output[4];
 
-  ANN ( input_test, output );
-  
-  for ( int i=0; i<4 ; i++){
-    if ( output[i] - expected_out[i] > 0.001f || output[i] - expected_out[i] < -0.001f ) 
-      return false;
+    ANN ( input_test, output );
+    
+    for ( int i=0; i<4 ; i++){
+      if ( output[i] - expected_out[i] > 0.001f || output[i] - expected_out[i] < -0.001f ) 
+        return false;
+    }
+    DEBUG_PRINT("ANN test passed\n");
   }
-  DEBUG_PRINT("ANN test passed\n");
-
   return true;
 
   //return controllerPidTest(); // Call the PID controller test to ensure it works as well 
@@ -172,25 +173,33 @@ void controllerOutOfTree(control_t *control, const setpoint_t *setpoint, const s
 
 void ANN(float* inputData, float* output ){
 
-  arm_matrix_instance_f32 net_weights[4];
+  arm_matrix_instance_f32 net_weights[N_LAYER];
+  const float* net_bias[N_LAYER];
 
-  arm_mat_init_f32( &net_weights[0], NET_0_WEIGHT_DIM0, NET_0_WEIGHT_DIM1, (float32_t *)net_0_weight );
-  arm_mat_init_f32( &net_weights[1], NET_2_WEIGHT_DIM0, NET_2_WEIGHT_DIM1, (float32_t *)net_2_weight );
-  arm_mat_init_f32( &net_weights[2], NET_4_WEIGHT_DIM0, NET_4_WEIGHT_DIM1, (float32_t *)net_4_weight);
-  arm_mat_init_f32( &net_weights[3], MEAN_LAYER_WEIGHT_DIM0, MEAN_LAYER_WEIGHT_DIM1, (float32_t *)mean_layer_weight );
   
+  arm_mat_init_f32( &net_weights[0], NET_0_WEIGHT_DIM0, NET_0_WEIGHT_DIM1, (float32_t *)net_0_weight );
+  net_bias[0] = net_0_bias;
+  arm_mat_init_f32( &net_weights[1], NET_1_WEIGHT_DIM0, NET_1_WEIGHT_DIM1, (float32_t *)net_1_weight );
+  net_bias[1] = net_1_bias;
+  arm_mat_init_f32( &net_weights[2], NET_2_WEIGHT_DIM0, NET_2_WEIGHT_DIM1, (float32_t *)net_2_weight);
+  net_bias[2] = net_2_bias;
+  #if N_LAYER > 3
+  arm_mat_init_f32( &net_weights[3], NET_3_WEIGHT_DIM0, NET_3_WEIGHT_DIM1, (float32_t *)net_3_weight );
+  net_bias[3] = net_3_bias;
+  #if N_LAYER > 4
+  arm_mat_init_f32( &net_weights[4], NET_4_WEIGHT_DIM0, NET_4_WEIGHT_DIM1, (float32_t *)net_4_weight );
+  net_bias[4] = net_4_bias;
+  #if N_LAYER > 5
+  arm_mat_init_f32( &net_weights[5], NET_5_WEIGHT_DIM0, NET_5_WEIGHT_DIM1, (float32_t *)net_5_weight );
+  net_bias[5] = net_5_bias;
+  #endif
+  #endif
+  #endif
   /*
   DEBUG_PRINT("puntatore alla memoria: %08lx \n", (long unsigned int)net_0_weight);
   DEBUG_PRINT("puntatore alla memoria: %08lx \n", (long unsigned int)net_2_weight);
   DEBUG_PRINT("puntatore alla memoria: %08lx \n", (long unsigned int)net_4_weight);
   */
-
-  const float* net_bias[4];
-
-  net_bias[0] = net_0_bias;
-  net_bias[1] = net_2_bias;
-  net_bias[2] = net_4_bias;
-  net_bias[3] = mean_layer_bias;
 
   float buffer_1[256];
   float buffer_2[256];
